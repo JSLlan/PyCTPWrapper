@@ -8,15 +8,15 @@ def main():
 
     # define a trader object
     trader = Trader()
-    trader.broker_id = "0001"
-    trader.user_id = "00119"
-    trader.investor_id = "00119"
-    trader.passwd = "130652"
+    trader.broker_id = ""
+    trader.user_id = ""
+    trader.investor_id = ""
+    trader.passwd = ""
     trader.Create("trader")
 
     # trader object can perform several actions
     print('action-connect to front',
-          trader.Connect('tcp://58.32.236.39:21205'))
+          trader.Connect(''))
 
     print('action-user login',
           trader.UserLogin(trader.broker_id, trader.investor_id, trader.passwd))
