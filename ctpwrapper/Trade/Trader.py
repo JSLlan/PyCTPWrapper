@@ -2,6 +2,8 @@
 # coding: utf-8
 from ctp.futures import ApiStruct, TraderApi
 import threading
+import json
+import copy
 
 
 class Trader(TraderApi):
@@ -17,6 +19,7 @@ class Trader(TraderApi):
         self.investor_id = ''
         self.user_id = ''
         self.passwd = ''
+        # self.current_trade = ''
 
     def Connect(self, frontAddr):
         """ connect to front server """
@@ -56,7 +59,7 @@ class Trader(TraderApi):
                 self.__rsp_Login['results'].update(ErrorID = RspInfo.ErrorID)
                 self.__rsp_Login['results'].update(ErrorMsg = RspInfo.ErrorMsg)
             if RspUserLogin is not None:
-                # print(RspUserLogin)
+                print(RspUserLogin)
                 updatedContent = self.__rsp_Login['results'].get('Content')
                 updatedContent.append(RspUserLogin)
                 self.__rsp_Login['results'].update(Content=updatedContent)
@@ -65,6 +68,7 @@ class Trader(TraderApi):
 
     def QryTrade(self, brokerID, investorID):
         """query today's trade records"""
+
         reqQryTrade = ApiStruct.QryTrade(BrokerID=brokerID, InvestorID=investorID)
         self.__rsp_QryTrade = dict(results=dict(ErrorID = '', ErrorMsg = '', Content = []),
                                    RequestID=self.__IncRequestID(),
@@ -79,18 +83,51 @@ class Trader(TraderApi):
                 return -4
         return ret
 
-    def OnRspQryTrade(self, Trade, RspInfo, RequestID, IsLast):
+    def OnRspQryTrade(self, rspTrade, RspInfo, RequestID, IsLast):
         """response of query today's trade records"""
+        trade = copy.deepcopy(rspTrade)
         if RequestID == self.__rsp_QryTrade['RequestID']:
             if RspInfo is not None:
                 self.__rsp_QryTrade['results'].update(ErrorID = RspInfo.ErrorID)
                 self.__rsp_QryTrade['results'].update(ErrorMsg = RspInfo.ErrorMsg)
-            if Trade is not None:
-                updatedContent = self.__rsp_QryTrade['results'].get('Content')
-                updatedContent.append(Trade)
-                self.__rsp_QryTrade['results'].update(Content = updatedContent)
+            if trade is not None:
+                self.__rsp_QryTrade['results'].get('Content').append(trade)
             if IsLast:
                 self.__rsp_QryTrade['event'].set()
+
+    def trade_to_dict(self, Trade):
+        result = {
+            'broker_id': Trade.BrokerID,
+            'investor_id': Trade.InvestorID,
+            'instrument_id': Trade.InstrumentID,
+            'order_ref': Trade.OrderRef,
+            'user_id': Trade.UserID,
+            'exchange': Trade.ExchangeID,
+            'trade_id': Trade.TradeID,
+            'direction': Trade.Direction,
+            'order_sys_id': Trade.OrderSysID,
+            'ParticipantID': Trade.ParticipantID,
+            'client_id': Trade.ClientID,
+            'trading_role': Trade.TradingRole,
+            'exchange_ins_id': Trade.ExchangeInstID,
+            'offset_flag': Trade.OffsetFlag,
+            'hedge_flag': Trade.HedgeFlag,
+            'price': Trade.Price,
+            'volume': Trade.Volume,
+            'trade_date': Trade.TradeDate,
+            'trade_time': Trade.TradeTime,
+            'trade_type': Trade.TradeType,
+            'price_source': Trade.PriceSource,
+            'oder_local_id': Trade.OrderLocalID,
+            'clearing_part_id': Trade.ClearingPartID,
+            'business_unit': Trade.BusinessUnit,
+            'sequence_no': Trade.SequenceNo,
+            'trading_day': Trade.TradingDay,
+            'settlement_id': Trade.SettlementID,
+            'broker_order_seq': Trade.BrokerOrderSeq,
+            'trade_source': Trade.TradeSource
+        }
+        return result
 
     def QryExchange(self, ExchangeID=b''):
         """ query exchange """
@@ -109,14 +146,13 @@ class Trader(TraderApi):
 
     def OnRspQryExchange(self, Exchange, RspInfo, RequestID, IsLast):
         """ response of query exchange """
+        exchange = copy.deepcopy(Exchange)
         if RequestID == self.__rsp_QryExchange['RequestID']:
             if RspInfo is not None:
                 self.__rsp_QryExchange['results'].update(ErrorID = RspInfo.ErrorID)
                 self.__rsp_QryExchange['results'].update(ErrorMsg = RspInfo.ErrorMsg)
-            if Exchange is not None:
-                updatedContent = self.__rsp_QryExchange['results'].get('Content')
-                updatedContent.append(Exchange)
-                self.__rsp_QryExchange['results'].update(Content=updatedContent)
+            if exchange is not None:
+                self.__rsp_QryExchange['results'].get('Content').append(exchange)
             if IsLast:
                 self.__rsp_QryExchange['event'].set()
 
